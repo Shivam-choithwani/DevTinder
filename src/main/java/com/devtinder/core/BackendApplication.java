@@ -1,4 +1,4 @@
-package com.devtinder.backend;
+package com.devtinder.core;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
