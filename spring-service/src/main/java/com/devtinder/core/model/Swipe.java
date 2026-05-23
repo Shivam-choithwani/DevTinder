@@ -11,14 +11,11 @@ public class Swipe {
 
     @Id
     private String id;
+    private String swiperUserId;
+    private String targetUserId;
 
-    private String swiperUserId; // The person swiping
-    private String targetUserId; // The person being swiped on
+    // True = Right Swipe (Like), False = Left Swipe (Pass)
+    private boolean isRightSwipe;
 
-    private SwipeAction action;
-
-    private LocalDateTime swipedAt = LocalDateTime.now();
-
-    // LIKE = Swiped Right. PASS = Swiped Left.
-    public enum SwipeAction { LIKE, PASS }
+    private LocalDateTime timestamp;
 }

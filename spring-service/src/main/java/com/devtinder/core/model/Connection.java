@@ -12,9 +12,9 @@ public class Connection {
     @Id
     private String id;
 
-    // We store both user IDs in the same connection
+    // The two users who matched with each other!
     private String userOneId;
     private String userTwoId;
 
-    private LocalDateTime matchedAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 }
