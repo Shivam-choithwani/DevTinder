@@ -22,13 +22,44 @@ const io = new Server(server, {
     }
 });
 
+// Map to store online users: Map of [userId -> socket.id]
+const onlineUsers = new Map();
+
 // Listen for incoming socket connections
 io.on('connection', (socket) => {
     console.log(`🔌 Client connected: ${socket.id}`);
 
-    // Listen for client disconnects
+    // 1. User joins presence (logs in)
+    socket.on('join_presence', (userId) => {
+        onlineUsers.set(userId, socket.id);
+        socket.userId = userId; // Save userId inside this specific socket session
+        console.log(`👤 User ${userId} is now ONLINE`);
+
+        // Broadcast to all other clients that this user is online
+        io.emit('user_status_changed', { userId, status: 'online' });
+    });
+
+    // 2. Fetch online status for a list of userIds (e.g. your matches)
+    socket.on('check_online_status', (userIds, callback) => {
+        const statuses = {};
+        userIds.forEach(id => {
+            statuses[id] = onlineUsers.has(id) ? 'online' : 'offline';
+        });
+        // Return result back to the frontend request
+        callback(statuses);
+    });
+
+    // 3. User disconnects (logs out / closes tab)
     socket.on('disconnect', () => {
         console.log(`❌ Client disconnected: ${socket.id}`);
+        
+        if (socket.userId) {
+            onlineUsers.delete(socket.userId);
+            console.log(`👤 User ${socket.userId} is now OFFLINE`);
+
+            // Broadcast to all other clients that this user went offline
+            io.emit('user_status_changed', { userId: socket.userId, status: 'offline' });
+        }
     });
 });
 
