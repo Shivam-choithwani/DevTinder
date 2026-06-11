@@ -1,5 +1,6 @@
 package com.devtinder.core.service;
 
+
 import com.devtinder.core.model.Connection;
 import com.devtinder.core.model.Swipe;
 import com.devtinder.core.repository.ConnectionRepository;
@@ -9,7 +10,18 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-
+import com.devtinder.core.model.Connection;
+import com.devtinder.core.model.Swipe;
+import com.devtinder.core.model.User; // <-- ADD THIS IMPORT
+import com.devtinder.core.repository.ConnectionRepository;
+import com.devtinder.core.repository.SwipeRepository;
+import com.devtinder.core.repository.UserRepository; // <-- ADD THIS IMPORT
+import com.devtinder.core.exception.SwipeLimitExceededException; // <-- ADD THIS IMPORT
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.time.LocalDate; // <-- ADD THIS IMPORT
+import java.time.LocalDateTime;
+import java.util.Optional;
 @Service
 public class SwipeService {
 
@@ -19,8 +31,29 @@ public class SwipeService {
     @Autowired
     private ConnectionRepository connectionRepository;
 
+    @Autowired // <-- ADD THIS INJECTION
+    private UserRepository userRepository;
+
     // This is the main Matchmaking Algorithm
     public Swipe processSwipe(Swipe swipe) {
+        // 0. Verify and track daily limits for FREE tier users
+        User swiper = userRepository.findById(swipe.getSwiperUserId())
+                .orElseThrow(() -> new RuntimeException("Swiper user not found"));
+
+        if (swiper.getSubscriptionTier() == null || swiper.getSubscriptionTier() == User.SubscriptionTier.FREE) {
+            LocalDate today = LocalDate.now();
+            if (swiper.getLastSwipeDate() != null && swiper.getLastSwipeDate().equals(today)) {
+                if (swiper.getDailySwipeCount() >= 20) {
+                    throw new SwipeLimitExceededException("You have reached your daily swipe limit. Upgrade to PRO for unlimited swipes.");
+                }
+                swiper.setDailySwipeCount(swiper.getDailySwipeCount() + 1);
+            } else {
+                swiper.setDailySwipeCount(1);
+                swiper.setLastSwipeDate(today);
+            }
+            userRepository.save(swiper);
+        }
+
         // 1. Save the new swipe
         swipe.setTimestamp(LocalDateTime.now());
         Swipe savedSwipe = swipeRepository.save(swipe);
@@ -51,4 +84,5 @@ public class SwipeService {
 
         return savedSwipe;
     }
+
 }

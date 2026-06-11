@@ -3,6 +3,8 @@ package com.devtinder.core.model;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -18,6 +20,10 @@ public class User {
 
     private Role role;
     private SubscriptionTier subscriptionTier;
+
+
+    private int dailySwipeCount = 0;
+    private LocalDate lastSwipeDate;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
