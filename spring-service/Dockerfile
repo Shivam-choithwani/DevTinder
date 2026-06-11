@@ -15,5 +15,5 @@ RUN ./mvnw clean package -DskipTests
 EXPOSE 8081
 
 # Command to run the application
-CMD java -Dspring.mongodb.uri=$MONGODB_URI -jar target/*.jar
+CMD java -jar target/*.jar
 
