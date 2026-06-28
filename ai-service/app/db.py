@@ -36,7 +36,7 @@ def get_collection(name: str):
     return database[name]
 
 def get_users_collection():
-    return get_collection("userinstance")
+    return get_collection("users")
 
 def get_profiles_collection():
     return get_collection("profiles")

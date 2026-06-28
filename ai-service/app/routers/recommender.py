@@ -46,24 +46,37 @@ async def record_swipe(swipe: SwipeRecord):
     Log a user swipe action (LIKE or PASS) and check for mutual matches.
     """
     swipes_coll = get_swipes_collection()
+    is_right_swipe = swipe.action.upper() == "LIKE"
     
-    # Save the swipe
+    # Save the swipe with both Java & Python schema fields for maximum compatibility
     await swipes_coll.update_one(
-        {"userId": swipe.userId, "targetUserId": swipe.targetUserId},
+        {"swiperUserId": swipe.userId, "targetUserId": swipe.targetUserId},
         {"$set": {
-            "action": swipe.action.upper(),
-            "timestamp": datetime.utcnow()
+            "isRightSwipe": is_right_swipe,
+            "timestamp": datetime.utcnow(),
+            # Legacy/Python-only fields:
+            "userId": swipe.userId,
+            "action": swipe.action.upper()
         }},
         upsert=True
     )
     
     match_created = False
     # If LIKE, check for mutual LIKE (match)
-    if swipe.action.upper() == "LIKE":
+    if is_right_swipe:
         reverse_swipe = await swipes_coll.find_one({
-            "userId": swipe.targetUserId,
-            "targetUserId": swipe.userId,
-            "action": "LIKE"
+            "$or": [
+                {
+                    "swiperUserId": swipe.targetUserId,
+                    "targetUserId": swipe.userId,
+                    "isRightSwipe": True
+                },
+                {
+                    "userId": swipe.targetUserId,
+                    "targetUserId": swipe.userId,
+                    "action": "LIKE"
+                }
+            ]
         })
         if reverse_swipe:
             matches_coll = get_matches_collection()

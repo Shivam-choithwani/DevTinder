@@ -13,4 +13,6 @@ public interface SwipeRepository extends MongoRepository<Swipe, String> {
 
     // 👇 ADD THIS METHOD
     List<Swipe> findBySwiperUserId(String swiperUserId);
+
+    List<Swipe> findByTargetUserIdAndIsRightSwipe(String targetUserId, boolean isRightSwipe);
 }

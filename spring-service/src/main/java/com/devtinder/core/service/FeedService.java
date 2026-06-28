@@ -38,27 +38,57 @@ public class FeedService {
         // 3. Always exclude the current user from their own feed
         excludedUserIds.add(currentUserId);
 
-        // 4. Retrieve candidate profiles not in the excluded list
-        List<Profile> candidates = profileRepository.findByUserIdNotIn(excludedUserIds);
+        try {
+            // Attempt to call the FastAPI AI Recommendation service
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            String url = "http://localhost:8000/recommender/feed";
 
-        // 5. Hook for the AI/ML Developer to apply filtering/ranking models
-        List<Profile> filteredAndRankedCandidates = applyMLRecommendationModels(candidates, currentUserId);
+            java.util.Map<String, Object> request = new java.util.HashMap<>();
+            request.put("userId", currentUserId);
+            request.put("limit", 20);
 
-        return filteredAndRankedCandidates;
-    }
+            // Set reasonable connection and read timeouts (e.g. 2.5 seconds)
+            org.springframework.http.client.SimpleClientHttpRequestFactory requestFactory = 
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+            requestFactory.setConnectTimeout(2500);
+            requestFactory.setReadTimeout(2500);
+            restTemplate.setRequestFactory(requestFactory);
 
-    /**
-     * 🤖 PLACEHOLDER FOR AI/ML DEVELOPER:
-     * Put your Python/Flask microservice call, PMML evaluator, TensorFlow/ONNX Java models,
-     * or custom ranking logic here to filter and sort the feed.
-     */
-    private List<Profile> applyMLRecommendationModels(List<Profile> candidates, String currentUserId) {
-        // TODO: AI/ML Developer should implement filtering/ranking logic here.
-        // For example:
-        // - Sort candidates based on cosine similarity of skills/interests.
-        // - Call an external AI inference service (e.g., Python FastAPI) with candidate data and user preferences.
-        // - Filter out profiles that do not meet matching score thresholds.
+            List<?> responseList = restTemplate.postForObject(url, request, List.class);
+            if (responseList != null && !responseList.isEmpty()) {
+                List<Profile> rankedProfiles = new ArrayList<>();
+                for (Object item : responseList) {
+                    if (item instanceof java.util.Map) {
+                        java.util.Map<?, ?> map = (java.util.Map<?, ?>) item;
+                        String targetUserId = (String) map.get("userId");
+                        if (targetUserId != null) {
+                            java.util.Optional<Profile> op = profileRepository.findByUserId(targetUserId);
+                            if (op.isPresent()) {
+                                Profile profile = op.get();
+                                // Parse and set transient compatibility details from AI service
+                                Object scoreObj = map.get("compatibilityScore");
+                                if (scoreObj instanceof Number) {
+                                    profile.setCompatibilityScore(((Number) scoreObj).doubleValue());
+                                }
+                                Object reasonObj = map.get("compatibilityReason");
+                                if (reasonObj instanceof String) {
+                                    profile.setCompatibilityReason((String) reasonObj);
+                                }
+                                rankedProfiles.add(profile);
+                            }
+                        }
+                    }
+                }
+                if (!rankedProfiles.isEmpty()) {
+                    System.out.println("Enriched feed with " + rankedProfiles.size() + " profiles using FastAPI AI Service.");
+                    return rankedProfiles;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("FastAPI AI Recommendation Service failed or unreachable: " + e.getMessage() + ". Falling back to DB-based feed.");
+        }
 
-        return candidates; // Currently returns raw candidates sorted chronologically/by database order
+        // Fallback: Retrieve candidate profiles directly from MongoDB in default order
+        return profileRepository.findByUserIdNotIn(excludedUserIds);
     }
 }

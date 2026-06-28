@@ -19,13 +19,21 @@ async def generate_profile(userId: str, intent: UserIntent):
     This parses the GitHub metadata, generates structural fields via Gemini 2.5 Flash,
     calculates embedding, and stores the profile in MongoDB.
     """
-    # Verify if user has a profile or if we need to fetch from their Github setup
-    # In a full flow, the userId might already have a githubUsername in the users/profiles collection.
-    # For independent backend testing, we will expect the user's userId to be their github username, 
-    # or query user setup. To be safe, if the userId contains github letters, we'll use it as github username,
-    # or look it up. Let's assume the userId represents the Github Username for easy testing, or allow it.
-    github_username = userId
+    # Lookup the githubUrl from the shared profiles collection
+    profiles_coll = get_profiles_collection()
+    profile_doc = await profiles_coll.find_one({"userId": userId})
     
+    github_username = None
+    if profile_doc and profile_doc.get("githubUrl"):
+        url = profile_doc.get("githubUrl", "").strip()
+        if "github.com/" in url:
+            parts = url.split("github.com/")
+            if len(parts) > 1:
+                github_username = parts[1].split("/")[0].split("?")[0].strip()
+                
+    if not github_username:
+        github_username = userId
+        
     logger.info(f"Generating profile for user {userId} using GitHub profile {github_username}")
     
     # Scrape GitHub

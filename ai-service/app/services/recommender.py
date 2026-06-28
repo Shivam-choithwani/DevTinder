@@ -36,13 +36,13 @@ class RecommenderService:
         
         plan = "free"
         if user:
-            plan = user.get("plan", "free").lower()
+            plan = user.get("subscriptionTier", user.get("plan", "FREE")).lower()
             
         swipes_coll = get_swipes_collection()
         time_threshold = get_naive_utc_now() - timedelta(hours=24)
         
         swipe_count = await swipes_coll.count_documents({
-            "userId": user_id,
+            "swiperUserId": user_id,
             "timestamp": {"$gte": time_threshold}
         })
         
@@ -62,8 +62,8 @@ class RecommenderService:
         
         # Get last 15 LIKEd userIds
         cursor = swipes_coll.find({
-            "userId": user_id,
-            "action": "LIKE"
+            "swiperUserId": user_id,
+            "isRightSwipe": True
         }).sort("timestamp", -1).limit(15)
         
         liked_user_ids = []
@@ -164,7 +164,7 @@ class RecommenderService:
 
         # 3. Exclude already swiped profiles
         swipes_coll = get_swipes_collection()
-        swiped_cursor = swipes_coll.find({"userId": user_id})
+        swiped_cursor = swipes_coll.find({"swiperUserId": user_id})
         swiped_target_ids = set()
         async for swipe in swiped_cursor:
             swiped_target_ids.add(swipe["targetUserId"])

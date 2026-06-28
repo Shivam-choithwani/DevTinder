@@ -24,4 +24,22 @@ public class Profile {
     private List<String> interests;
 
     private int yearsOfExperience;
+
+    @org.springframework.data.annotation.Transient
+    private Double compatibilityScore;
+
+    @org.springframework.data.annotation.Transient
+    private String compatibilityReason;
+
+    @org.springframework.data.annotation.Transient
+    private String connectionId;
+
+    @org.springframework.data.annotation.Transient
+    private java.time.LocalDateTime matchedAt;
+
+    @org.springframework.data.annotation.Transient
+    private String swipeId;
+
+    @org.springframework.data.annotation.Transient
+    private java.time.LocalDateTime timestamp;
 }

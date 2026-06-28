@@ -607,8 +607,17 @@ export const swipeService = {
 
 export const connectionService = {
   getConnections: async (currentUserId) => {
-    // Note: Connections are simulated locally in all cases since no GET /api/connections exists in backend
-    return mockConnectionsAndRequests.getConnections(currentUserId);
+    if (await isBackendReachable()) {
+      try {
+        const response = await apiClient.get('/connections');
+        return response.data;
+      } catch (err) {
+        console.warn('[API] Real connections get failed. Falling back to mock.', err);
+        return mockConnectionsAndRequests.getConnections(currentUserId);
+      }
+    } else {
+      return mockConnectionsAndRequests.getConnections(currentUserId);
+    }
   },
   unmatchConnection: async (currentUserId, otherUserId) => {
     console.log('[Mock API] Unmatching users', currentUserId, 'and', otherUserId);
@@ -645,8 +654,17 @@ export const connectionService = {
 
 export const requestService = {
   getRequests: async (currentUserId) => {
-    // Note: Pending requests are simulated locally in all cases since no GET /api/requests exists in backend
-    return mockConnectionsAndRequests.getRequests(currentUserId);
+    if (await isBackendReachable()) {
+      try {
+        const response = await apiClient.get('/requests');
+        return response.data;
+      } catch (err) {
+        console.warn('[API] Real requests get failed. Falling back to mock.', err);
+        return mockConnectionsAndRequests.getRequests(currentUserId);
+      }
+    } else {
+      return mockConnectionsAndRequests.getRequests(currentUserId);
+    }
   }
 };
 
