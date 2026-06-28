@@ -76,8 +76,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configure(http)) // Enable CORS
                 .csrf(csrf -> csrf.disable()) // Disable CSRF since we use JWTs
                 .authorizeHttpRequests(auth -> auth
-                        // Open endpoints for register, login, and swagger
+                        // Open endpoints for register, login, swagger, and WebSocket
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws/chat/**", "/ws/chat").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/webjars/**").permitAll()
                         // Require JWT authentication for everything else
                         .anyRequest().authenticated()

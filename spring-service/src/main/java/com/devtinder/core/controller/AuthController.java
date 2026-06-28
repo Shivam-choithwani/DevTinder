@@ -62,6 +62,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody AuthRequest loginRequest) {
+        // Check if user is registered first
+        if (!userRepository.existsByEmail(loginRequest.getEmail())) {
+            return ResponseEntity.badRequest().body("This email is not registered with us, please sign up.");
+        }
+
         // Authenticate email and password
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
