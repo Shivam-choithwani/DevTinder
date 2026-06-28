@@ -261,7 +261,31 @@ const mockFeedService = {
 
     // Exclude current user and already swiped developers
     const feed = profiles.filter(p => p.userId !== currentUserId && !swipedTargetIds.includes(p.userId));
-    return feed;
+    
+    // Enrich with mock compatibility scores and reasons
+    const mockReasons = [
+      "Both of you specialize in modern React architectures and share an interest in open source.",
+      "They build microservices using Spring Boot, which perfectly complements your frontend skills.",
+      "Aligns with your interest in statistics and machine learning; they build recommendation systems.",
+      "They focus on cloud native automation (AWS/Terraform) to support your backend deployments.",
+      "Matches your mobile development goals; they are an expert in native-looking Flutter apps.",
+      "A full-stack engineer who complements your interest in product design and UI layouts.",
+      "They specialize in low-level Rust and WebAssembly, which can optimize your heavy algorithms."
+    ];
+
+    return feed.map(p => {
+      // Create a deterministic score & reason index based on the profile id string
+      const idNum = p.id ? parseInt(p.id.replace(/[^0-9]/g, '')) || 1 : 1;
+      const compatibilityScore = 75 + (idNum * 7) % 24; // score between 75% and 98%
+      const reasonIdx = idNum % mockReasons.length;
+      const compatibilityReason = mockReasons[reasonIdx];
+      
+      return {
+        ...p,
+        compatibilityScore,
+        compatibilityReason
+      };
+    });
   }
 };
 

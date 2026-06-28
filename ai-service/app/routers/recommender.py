@@ -13,7 +13,8 @@ from app.services.recommender import recommender_service
 from app.db import (
     get_swipes_collection, 
     get_matches_collection, 
-    get_builder_profiles_collection
+    get_builder_profiles_collection,
+    get_collection
 )
 
 router = APIRouter(prefix="/recommender", tags=["recommender"])
@@ -80,7 +81,7 @@ async def record_swipe(swipe: SwipeRecord):
         })
         if reverse_swipe:
             matches_coll = get_matches_collection()
-            # Save mutual match
+            # Save mutual match in Python format
             await matches_coll.update_one(
                 {
                     "$or": [
@@ -94,6 +95,24 @@ async def record_swipe(swipe: SwipeRecord):
                 }},
                 upsert=True
             )
+            
+            # Save connection in Spring Boot format
+            connections_coll = get_collection("connections")
+            await connections_coll.update_one(
+                {
+                    "$or": [
+                        {"userOneId": swipe.userId, "userTwoId": swipe.targetUserId},
+                        {"userOneId": swipe.targetUserId, "userTwoId": swipe.userId}
+                    ]
+                },
+                {"$set": {
+                    "userOneId": swipe.userId,
+                    "userTwoId": swipe.targetUserId,
+                    "createdAt": datetime.utcnow()
+                }},
+                upsert=True
+            )
+            
             match_created = True
             logger.info(f"Mutual match created between {swipe.userId} and {swipe.targetUserId}!")
             

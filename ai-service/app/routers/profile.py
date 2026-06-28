@@ -6,7 +6,8 @@ from app.services.github_service import github_service
 from app.services.ai_service import ai_service
 from app.db import (
     get_builder_profiles_collection, 
-    get_github_profiles_collection
+    get_github_profiles_collection,
+    get_profiles_collection
 )
 
 router = APIRouter(prefix="/profile", tags=["profile"])

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Briefcase, Calendar, Globe } from 'lucide-react';
+import { FileText, Briefcase, Calendar, Globe, Sparkles } from 'lucide-react';
 import { projectService } from '../services/api';
 
 const Github = (props) => (
@@ -47,7 +47,9 @@ export default function DevCard({ profile, swipeDirection }) {
     skills = [],
     interests = [],
     yearsOfExperience,
-    photoUrl
+    photoUrl,
+    compatibilityScore,
+    compatibilityReason
   } = profile;
 
   return (
@@ -61,6 +63,14 @@ export default function DevCard({ profile, swipeDirection }) {
 
       {/* Dark vignette gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none"></div>
+
+      {/* Compatibility Score Badge */}
+      {compatibilityScore && (
+        <div className="absolute top-4 left-4 bg-slate-950/80 border border-violet-500/30 text-violet-300 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md shadow-lg z-20 animate-fade-in">
+          <Sparkles className="w-3.5 h-3.5 text-violet-400 fill-violet-400/20" />
+          <span>{Math.round(compatibilityScore)}% Match</span>
+        </div>
+      )}
 
       {/* Swipe Badges Overlay (Tinder-style LIKE/PASS indicators) */}
       {swipeDirection === 'right' && (
@@ -119,6 +129,16 @@ export default function DevCard({ profile, swipeDirection }) {
             )}
           </div>
         </div>
+
+        {/* AI Matching Reason */}
+        {compatibilityReason && (
+          <div className="p-3 rounded-2xl bg-violet-950/20 border border-violet-500/10 text-xs text-violet-200 leading-relaxed flex flex-col gap-1 shadow-inner backdrop-blur-sm">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-violet-400 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-violet-400 fill-violet-400/10" /> AI MATCH REASON
+            </span>
+            <p>{compatibilityReason}</p>
+          </div>
+        )}
 
         {/* Bio */}
         {bio && (
